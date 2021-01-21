@@ -1,0 +1,11 @@
+.App {
+  text-align: center;
+  background-color: black;
+  display: flex;
+  align-self: center;
+  align-items: center;
+}
+
+#gameboard {
+  background-color: #232323;
+}
