@@ -1,6 +1,7 @@
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useEffect, useState } from "react";
+import { Button } from "react-bootstrap";
 
 function App() {
   const [winSize, setWinSize] = useState({
@@ -13,7 +14,7 @@ function App() {
   const [snakeBody, setSnakeBody] = useState([]);
   const [alive, setAlive] = useState(true);
 
-  const [gridSize, setGridSize] = useState(30);
+  const [gridSize, setGridSize] = useState(10);
 
   useEffect(() => {
     const handleResize = () =>
@@ -73,7 +74,7 @@ function App() {
       ctx.fill();
 
       //snakeHead
-      ctx.fillStyle = "#00ff00";
+      ctx.fillStyle = alive ? "#00ff00" : "#ff0000";
       ctx.beginPath();
 
       ctx.arc(
@@ -86,7 +87,7 @@ function App() {
       ctx.fill();
 
       //snakeBody
-      ctx.fillStyle = "#00ff00";
+      ctx.fillStyle = alive ? "#00ff00" : "#ff0000";
       ctx.beginPath();
 
       snakeBody.forEach((b) => {
@@ -117,6 +118,17 @@ function App() {
       return;
     }
 
+    if (snakeHead.x === appleLocation.x && snakeHead.y === appleLocation.y) {
+      setSnakeBody([...snakeBody, { x: snakeHead.x, y: snakeHead.y }]);
+      setSnakeHead({
+        x: snakeHead.x + (snakeHead.d === 1 ? 1 : snakeHead.d === 3 ? -1 : 0),
+        y: snakeHead.y + (snakeHead.d === 2 ? 1 : snakeHead.d === 0 ? -1 : 0),
+        d: snakeHead.d,
+      });
+      moveApple();
+      return;
+    }
+
     setSnakeBody([...snakeBody.splice(1), { x: snakeHead.x, y: snakeHead.y }]);
     setSnakeHead({
       x: snakeHead.x + (snakeHead.d === 1 ? 1 : snakeHead.d === 3 ? -1 : 0),
@@ -125,11 +137,41 @@ function App() {
     });
   };
 
+  let moveApple = () => {
+    let appleX = 0;
+    let appleY = 0;
+    do {
+      appleX = Math.floor(Math.random() * gridSize);
+      appleY = Math.floor(Math.random() * gridSize);
+    } while (isOnSnake(appleX, appleY));
+
+    setAppleLocation({ x: appleX, y: appleY });
+  };
+
+  let setDirection = (dir) => {
+    setSnakeHead({ x: snakeHead.x, y: snakeHead.y, d: dir });
+  };
+
   let isOnSnake = (x, y) => {
     if (x === snakeHead.x && y === snakeHead.y) {
       return true;
     }
     return snakeBody.includes({ x: x, y: y });
+  };
+
+  let onKeyPress = (e) => {
+    setSnakeHead({
+      x: snakeHead.x,
+      y: snakeHead.y,
+      d:
+        e.key === "ArrowUp"
+          ? 0
+          : e.key === "ArrowRight"
+          ? 1
+          : e.key === "ArrowDown"
+          ? 2
+          : 3,
+    });
   };
 
   useEffect(() => {
@@ -143,26 +185,62 @@ function App() {
       { x: initalX - 1, y: initalY },
     ]);
 
-    let appleX = 0;
-    let appleY = 0;
-    do {
-      appleX = Math.floor(Math.random() * gridSize);
-      appleY = Math.floor(Math.random() * gridSize);
-    } while (isOnSnake(appleX, appleY));
-
-    setAppleLocation({ x: appleX, y: appleY });
+    moveApple();
   }, []);
 
   useEffect(() => {
-    if (!alive) return;
+    if (!alive) {
+      return;
+    }
     const timer = setInterval(moveSnake, 1000);
     return () => clearInterval(timer);
   }, [appleLocation, snakeHead, alive]);
 
+  useEffect(() => {
+    window.addEventListener("keydown", onKeyPress);
+    return () => window.removeEventListener("keydown", onKeyPress);
+  }, [snakeHead]);
+
   return (
-    <div className="App vh-100 vw-100">
-      <canvas id="gameboard"></canvas>
-    </div>
+    <>
+      <div>
+        <Button
+          variant="primary"
+          onClick={() => {
+            setDirection(0);
+          }}
+        >
+          up
+        </Button>{" "}
+        <Button
+          variant="primary"
+          onClick={() => {
+            setDirection(2);
+          }}
+        >
+          down
+        </Button>{" "}
+        <Button
+          variant="primary"
+          onClick={() => {
+            setDirection(3);
+          }}
+        >
+          left
+        </Button>{" "}
+        <Button
+          variant="primary"
+          onClick={() => {
+            setDirection(1);
+          }}
+        >
+          right
+        </Button>{" "}
+      </div>
+      <div className="App vh-75 vw-100">
+        <canvas id="gameboard"></canvas>
+      </div>
+    </>
   );
 }
 
